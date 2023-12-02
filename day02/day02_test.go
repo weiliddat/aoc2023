@@ -22,6 +22,15 @@ func TestPart01(t *testing.T) {
 	}
 }
 
+func TestPart02(t *testing.T) {
+	expected := "2286"
+	actual, _ := day02.Part02(testInput)
+
+	if expected != actual {
+		t.Errorf("Expected %s got %s", expected, actual)
+	}
+}
+
 func TestParseGameText(t *testing.T) {
 	text := `Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green`
 	actual, err := day02.ParseGameText(text)

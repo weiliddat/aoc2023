@@ -68,7 +68,33 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	lines := strings.Split(strings.TrimSpace(input), "\n")
+
+	sum := 0
+	for _, line := range lines {
+		constraint := CubeSet{}
+
+		game, err := ParseGameText(line)
+		if err != nil {
+			return "", err
+		}
+
+		for _, set := range game.Sets {
+			if set.Red > constraint.Red {
+				constraint.Red = set.Red
+			}
+			if set.Green > constraint.Green {
+				constraint.Green = set.Green
+			}
+			if set.Blue > constraint.Blue {
+				constraint.Blue = set.Blue
+			}
+		}
+
+		sum += constraint.Red * constraint.Green * constraint.Blue
+	}
+
+	return strconv.Itoa(sum), nil
 }
 
 func ParseGameText(input string) (Game, error) {
