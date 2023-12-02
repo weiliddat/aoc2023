@@ -2,6 +2,7 @@ package main
 
 import (
 	"aoc2023/day01"
+	"aoc2023/day02"
 	"fmt"
 	"os"
 	"strconv"
@@ -23,6 +24,8 @@ func main() {
 	switch dayToRun {
 	case 1:
 		outputPart01, outputPart02, err = day01.Solve(day01.Input)
+	case 2:
+		outputPart01, outputPart02, err = day02.Solve(day02.Input)
 	}
 
 	if err != nil {
