@@ -12,7 +12,7 @@ func main() {
 	dayToRun, err := strconv.ParseInt(os.Args[1], 10, 8)
 
 	if err != nil {
-		fmt.Printf("Error converting %s to integer", os.Args[1])
+		fmt.Printf("Error converting %s to integer\n", os.Args[1])
 		os.Exit(1)
 	}
 
