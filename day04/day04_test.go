@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var testInput01 = `Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+var testInput = `Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
 Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
 Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
 Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
@@ -16,19 +16,23 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 
 func TestPart01(t *testing.T) {
 	expected := "13"
-	actual, _ := day04.Part01(testInput01)
+	actual, err := day04.Part01(testInput)
 
+	if err != nil {
+		t.Error(err)
+	}
 	if expected != actual {
 		t.Errorf("Expected %s got %s", expected, actual)
 	}
 }
 
-var testInput02 = ``
-
 func TestPart02(t *testing.T) {
-	expected := ""
-	actual, _ := day04.Part02(testInput02)
+	expected := "30"
+	actual, err := day04.Part02(testInput)
 
+	if err != nil {
+		t.Error(err)
+	}
 	if expected != actual {
 		t.Errorf("Expected %s got %s", expected, actual)
 	}
@@ -37,6 +41,7 @@ func TestPart02(t *testing.T) {
 func TestParseScratchCards(t *testing.T) {
 	testInput := "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53"
 	expected := day04.ScratchCard{
+		ID: 1,
 		WinningNumbers: map[int]bool{
 			41: true,
 			48: true,
@@ -45,9 +50,13 @@ func TestParseScratchCards(t *testing.T) {
 			17: true,
 		},
 		CardNumbers: []int{83, 86, 6, 31, 17, 9, 48, 53},
+		Matches:     []int{83, 86, 17, 48},
 	}
-	actual := day04.ParseScratchCard(testInput)
+	actual, err := day04.ParseScratchCard(testInput)
 
+	if err != nil {
+		t.Error(err)
+	}
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v got %+v", expected, actual)
 	}
