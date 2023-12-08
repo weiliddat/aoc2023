@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// split and removes empty lines
 func SplitLines(input string) []string {
 	lines := strings.Split(input, "\n")
 	lines = slices.DeleteFunc(lines, func(line string) bool {
