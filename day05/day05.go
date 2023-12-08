@@ -5,8 +5,10 @@ import (
 	_ "embed"
 	"math"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 //go:embed input.txt
@@ -54,17 +56,61 @@ func Part02(input string) (string, error) {
 
 	lowest := math.MaxInt
 	for i := 0; i < len(almanac.Seeds); i += 2 {
-		for j := 0; j < almanac.Seeds[i+1]; j++ {
-			seed := almanac.Seeds[i] + j
-			destNum := almanac.LookupLocationFromSeed(seed)
+		locations := make(chan int)
+		lowestChan := make(chan int)
+		wg := sync.WaitGroup{}
 
-			if lowest > destNum {
-				lowest = destNum
+		numSeeds := almanac.Seeds[i+1]
+		numWorkers := runtime.NumCPU()
+		pieceSize := numSeeds / numWorkers
+		remainder := numSeeds % numWorkers
+
+		for i := 0; i < numWorkers; i++ {
+			wg.Add(1)
+
+			rangeStart := almanac.Seeds[0] + (i * pieceSize)
+			rangeEnd := almanac.Seeds[0] + (i+1)*pieceSize
+			if i == numWorkers-1 {
+				rangeEnd += remainder
 			}
+			seeds := []int{rangeStart, rangeEnd}
+
+			go lookupWorker(&almanac, seeds, locations, &wg)
+		}
+
+		go lowestWorker(locations, lowestChan)
+		wg.Wait()
+		close(locations)
+
+		lowestInGroup := <-lowestChan
+
+		if lowest > lowestInGroup {
+			lowest = lowestInGroup
 		}
 	}
 
 	return strconv.Itoa(lowest), nil
+}
+
+func lookupWorker(a *Almanac, seeds []int, locations chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for s := seeds[0]; s < seeds[1]; s++ {
+		l := a.LookupLocationFromSeed(s)
+		locations <- l
+	}
+}
+
+func lowestWorker(locations <-chan int, lc chan<- int) {
+	lowest := math.MaxInt
+
+	for l := range locations {
+		if lowest > l {
+			lowest = l
+		}
+	}
+
+	lc <- lowest
 }
 
 type AlmanacMapRange struct {
