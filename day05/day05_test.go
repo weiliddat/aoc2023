@@ -278,7 +278,7 @@ fertilizer-to-water map:
 57 7 4
 `
 	expected := day05.Almanac{
-		Seeds: []int{79, 14, 55, 13},
+		Seeds: []uint64{79, 14, 55, 13},
 		Maps: map[string]day05.AlmanacMap{
 			"seed": {
 				Src:  "seed",
@@ -314,7 +314,7 @@ fertilizer-to-water map:
 
 func TestAlmanacLookup(t *testing.T) {
 	almanac := day05.Almanac{
-		Seeds: []int{79, 14, 55, 13},
+		Seeds: []uint64{79, 14, 55, 13},
 		Maps: map[string]day05.AlmanacMap{
 			"seed": {
 				Src:  "seed",
@@ -379,7 +379,8 @@ func TestAlmanacLookup(t *testing.T) {
 		},
 	}
 
-	expectedName, expectedNum := "soil", 81
+	var expectedName string = "soil"
+	var expectedNum uint64 = 81
 	actualName, actualNum := almanac.Lookup("seed", 79)
 
 	if expectedName != actualName || expectedNum != actualNum {

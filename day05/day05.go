@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 //go:embed input.txt
@@ -36,7 +37,7 @@ func Part01(input string) (string, error) {
 		return "", err
 	}
 
-	lowest := math.MaxInt
+	lowest := uint64(math.MaxUint64)
 	for _, seed := range almanac.Seeds {
 		destNum := almanac.LookupLocationFromSeed(seed)
 
@@ -45,7 +46,7 @@ func Part01(input string) (string, error) {
 		}
 	}
 
-	return strconv.Itoa(lowest), nil
+	return strconv.FormatUint(lowest, 10), nil
 }
 
 func Part02(input string) (string, error) {
@@ -54,69 +55,51 @@ func Part02(input string) (string, error) {
 		return "", err
 	}
 
-	lowest := math.MaxInt
+	lowest := atomic.Uint64{}
+	lowest.Store(math.MaxUint64)
+
 	for i := 0; i < len(almanac.Seeds); i += 2 {
-		locations := make(chan int)
-		lowestChan := make(chan int)
 		wg := sync.WaitGroup{}
 
 		numSeeds := almanac.Seeds[i+1]
-		numWorkers := runtime.NumCPU()
-		pieceSize := numSeeds / numWorkers
-		remainder := numSeeds % numWorkers
+		numWorkers := uint64(runtime.NumCPU())
+		pieceSize := numSeeds / uint64(numWorkers)
+		remainder := numSeeds % uint64(numWorkers)
 
-		for i := 0; i < numWorkers; i++ {
+		for j := uint64(0); j < numWorkers; j++ {
 			wg.Add(1)
 
-			rangeStart := almanac.Seeds[0] + (i * pieceSize)
-			rangeEnd := almanac.Seeds[0] + (i+1)*pieceSize
-			if i == numWorkers-1 {
+			rangeStart := almanac.Seeds[i] + (j * pieceSize)
+			rangeEnd := almanac.Seeds[i] + (j+1)*pieceSize
+			if j == numWorkers-1 {
 				rangeEnd += remainder
 			}
-			seeds := []int{rangeStart, rangeEnd}
+			seeds := []uint64{rangeStart, rangeEnd}
 
-			go lookupWorker(&almanac, seeds, locations, &wg)
+			go lookupWorker(&almanac, seeds, &lowest, &wg)
 		}
 
-		go lowestWorker(locations, lowestChan)
 		wg.Wait()
-		close(locations)
-
-		lowestInGroup := <-lowestChan
-
-		if lowest > lowestInGroup {
-			lowest = lowestInGroup
-		}
 	}
 
-	return strconv.Itoa(lowest), nil
+	return strconv.FormatUint(lowest.Load(), 10), nil
 }
 
-func lookupWorker(a *Almanac, seeds []int, locations chan<- int, wg *sync.WaitGroup) {
+func lookupWorker(a *Almanac, seeds []uint64, lowest *atomic.Uint64, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for s := seeds[0]; s < seeds[1]; s++ {
 		l := a.LookupLocationFromSeed(s)
-		locations <- l
-	}
-}
-
-func lowestWorker(locations <-chan int, lc chan<- int) {
-	lowest := math.MaxInt
-
-	for l := range locations {
-		if lowest > l {
-			lowest = l
+		if lowest.Load() > l {
+			lowest.Store(l)
 		}
 	}
-
-	lc <- lowest
 }
 
 type AlmanacMapRange struct {
-	DestStart int
-	SrcStart  int
-	Length    int
+	DestStart uint64
+	SrcStart  uint64
+	Length    uint64
 }
 
 type AlmanacMap struct {
@@ -126,11 +109,11 @@ type AlmanacMap struct {
 }
 
 type Almanac struct {
-	Seeds []int
+	Seeds []uint64
 	Maps  map[string]AlmanacMap
 }
 
-func (a *Almanac) LookupLocationFromSeed(seed int) int {
+func (a *Almanac) LookupLocationFromSeed(seed uint64) uint64 {
 	nextName, nextNum := "seed", seed
 
 	for {
@@ -144,7 +127,7 @@ func (a *Almanac) LookupLocationFromSeed(seed int) int {
 	return nextNum
 }
 
-func (a *Almanac) Lookup(srcName string, srcNum int) (string, int) {
+func (a *Almanac) Lookup(srcName string, srcNum uint64) (string, uint64) {
 	destMap, exists := a.Maps[srcName]
 
 	if !exists {
@@ -165,7 +148,7 @@ func (a *Almanac) Lookup(srcName string, srcNum int) (string, int) {
 
 func ParseInput(input string) (Almanac, error) {
 	almanac := Almanac{
-		Seeds: []int{},
+		Seeds: []uint64{},
 		Maps:  map[string]AlmanacMap{},
 	}
 
@@ -173,7 +156,7 @@ func ParseInput(input string) (Almanac, error) {
 
 	seedTexts := strings.Split(blocks[0], " ")[1:]
 	for _, seedText := range seedTexts {
-		seed, err := strconv.Atoi(seedText)
+		seed, err := strconv.ParseUint(seedText, 10, 64)
 		if err != nil {
 			return almanac, err
 		}
@@ -194,17 +177,17 @@ func ParseInput(input string) (Almanac, error) {
 		for _, rangeLine := range rangeLines {
 			ranges := strings.Split(rangeLine, " ")
 
-			destStart, err := strconv.Atoi(ranges[0])
+			destStart, err := strconv.ParseUint(ranges[0], 10, 64)
 			if err != nil {
 				return almanac, err
 			}
 
-			srcStart, err := strconv.Atoi(ranges[1])
+			srcStart, err := strconv.ParseUint(ranges[1], 10, 64)
 			if err != nil {
 				return almanac, err
 			}
 
-			length, err := strconv.Atoi(ranges[2])
+			length, err := strconv.ParseUint(ranges[2], 10, 64)
 			if err != nil {
 				return almanac, err
 			}
