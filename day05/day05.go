@@ -3,6 +3,7 @@ package day05
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
+	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -36,16 +37,7 @@ func Part01(input string) (string, error) {
 
 	lowest := math.MaxInt
 	for _, seed := range almanac.Seeds {
-		destName, destNum := "seed", seed
-
-		for {
-			nextName, nextNum := almanac.Lookup(destName, destNum)
-			destName, destNum = nextName, nextNum
-
-			if destName == "location" {
-				break
-			}
-		}
+		destNum := almanac.LookupLocationFromSeed(seed)
 
 		if lowest > destNum {
 			lowest = destNum
@@ -56,7 +48,30 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	almanac, err := ParseInput(input)
+	if err != nil {
+		return "", err
+	}
+
+	counter := 0
+	lowest := math.MaxInt
+	for i := 0; i < len(almanac.Seeds); i += 2 {
+		initial := almanac.Seeds[i]
+
+		for j := 0; j < almanac.Seeds[i+1]; j++ {
+			seed := initial + j
+			destNum := almanac.LookupLocationFromSeed(seed)
+
+			counter++
+			fmt.Println(counter)
+
+			if lowest > destNum {
+				lowest = destNum
+			}
+		}
+	}
+
+	return strconv.Itoa(lowest), nil
 }
 
 type AlmanacMapRange struct {
@@ -76,6 +91,20 @@ type Almanac struct {
 	Maps  map[string]AlmanacMap
 }
 
+func (a *Almanac) LookupLocationFromSeed(seed int) int {
+	nextName, nextNum := "seed", seed
+
+	for {
+		nextName, nextNum = a.Lookup(nextName, nextNum)
+
+		if nextName == "location" {
+			break
+		}
+	}
+
+	return nextNum
+}
+
 func (a *Almanac) Lookup(srcName string, srcNum int) (string, int) {
 	destMap, exists := a.Maps[srcName]
 
@@ -86,7 +115,7 @@ func (a *Almanac) Lookup(srcName string, srcNum int) (string, int) {
 	destName, destNum := destMap.Dest, srcNum
 
 	for _, r := range destMap.Ranges {
-		if srcNum >= r.SrcStart && srcNum <= r.SrcStart+r.Length {
+		if srcNum >= r.SrcStart && srcNum < r.SrcStart+r.Length {
 			offset := srcNum - r.SrcStart
 			destNum = r.DestStart + offset
 		}

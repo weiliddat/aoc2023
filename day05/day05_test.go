@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var testInput01 = `seeds: 79 14 55 13
+var testInput = `seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
@@ -43,18 +43,16 @@ humidity-to-location map:
 
 func TestPart01(t *testing.T) {
 	expected := "35"
-	actual, _ := day05.Part01(testInput01)
+	actual, _ := day05.Part01(testInput)
 
 	if expected != actual {
 		t.Errorf("Expected %s got %s", expected, actual)
 	}
 }
 
-var testInput02 = ``
-
 func TestPart02(t *testing.T) {
-	expected := ""
-	actual, _ := day05.Part02(testInput02)
+	expected := "46"
+	actual, _ := day05.Part02(testInput)
 
 	if expected != actual {
 		t.Errorf("Expected %s got %s", expected, actual)
@@ -192,6 +190,13 @@ func TestAlmanacLookup(t *testing.T) {
 
 	expectedName, expectedNum = "light", 74
 	actualName, actualNum = almanac.Lookup("water", 81)
+
+	if expectedName != actualName || expectedNum != actualNum {
+		t.Errorf("Expected %s, %d got %s, %d", expectedName, expectedNum, actualName, actualNum)
+	}
+
+	expectedName, expectedNum = "temperature", 45
+	actualName, actualNum = almanac.Lookup("light", 77)
 
 	if expectedName != actualName || expectedNum != actualNum {
 		t.Errorf("Expected %s, %d got %s, %d", expectedName, expectedNum, actualName, actualNum)
