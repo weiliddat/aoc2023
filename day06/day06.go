@@ -27,8 +27,7 @@ func Solve(input string) (string, string, error) {
 }
 
 func Part01(input string) (string, error) {
-	races, err := ParseRaces(&input)
-
+	races, err := ParseRaces01(&input)
 	if err != nil {
 		return "", nil
 	}
@@ -43,7 +42,19 @@ func Part01(input string) (string, error) {
 	return strconv.Itoa(sum), nil
 }
 
-func ParseRaces(input *string) (map[int]int, error) {
+func Part02(input string) (string, error) {
+	totalTime, distToBeat, err := ParseRaces02(&input)
+	if err != nil {
+		return "", nil
+	}
+
+	min, max := FindHoldRange(totalTime, distToBeat)
+	sum := (max - min + 1)
+
+	return strconv.Itoa(sum), nil
+}
+
+func ParseRaces01(input *string) (map[int]int, error) {
 	races := map[int]int{}
 
 	numberMatcher := regexp.MustCompile(`([\d]+)`)
@@ -67,6 +78,26 @@ func ParseRaces(input *string) (map[int]int, error) {
 	return races, nil
 }
 
+func ParseRaces02(input *string) (int, int, error) {
+	numberMatcher := regexp.MustCompile(`([\d]+)`)
+	timeText, distanceText, _ := strings.Cut(*input, "\n")
+
+	timeMatches := numberMatcher.FindAllString(timeText, -1)
+	distMatches := numberMatcher.FindAllString(distanceText, -1)
+
+	time, err := strconv.Atoi(strings.Join(timeMatches, ""))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	dist, err := strconv.Atoi(strings.Join(distMatches, ""))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return time, dist, nil
+}
+
 func FindHoldRange(totalTime int, distToBeat int) (int, int) {
 	offset := 0
 
@@ -86,8 +117,4 @@ func FindDistance(timeHeld int, totalTime int) int {
 	speed := timeHeld
 	distance := (totalTime - timeHeld) * speed
 	return distance
-}
-
-func Part02(input string) (string, error) {
-	return "", nil
 }

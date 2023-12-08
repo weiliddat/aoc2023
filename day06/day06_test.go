@@ -21,7 +21,7 @@ func TestPart01(t *testing.T) {
 }
 
 func TestPart02(t *testing.T) {
-	expected := ""
+	expected := "71503"
 	actual, _ := day06.Part02(testInput)
 
 	if expected != actual {
@@ -29,14 +29,14 @@ func TestPart02(t *testing.T) {
 	}
 }
 
-func TestParseRaces(t *testing.T) {
+func TestParseRaces01(t *testing.T) {
 	expected := map[int]int{
 		7:  9,
 		15: 40,
 		30: 200,
 	}
 
-	actual, err := day06.ParseRaces(&testInput)
+	actual, err := day06.ParseRaces01(&testInput)
 
 	if err != nil {
 		t.Error(err)
@@ -44,6 +44,26 @@ func TestParseRaces(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v got %+v", expected, actual)
+	}
+}
+
+func TestParseRaces02(t *testing.T) {
+	expectedTime, expectedDist := 71530, 940200
+
+	actualTime, actualDist, err := day06.ParseRaces02(&testInput)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if expectedTime != actualTime || expectedDist != actualDist {
+		t.Errorf(
+			"Expected %d, %d got %d, %d",
+			expectedTime,
+			expectedDist,
+			actualTime,
+			actualDist,
+		)
 	}
 }
 
