@@ -28,27 +28,14 @@ func Solve(input string) (string, string, error) {
 }
 
 func Part01(input string) (string, error) {
-	histories := [][]int{}
-
-	lines := aoc_util.SplitLines(input)
-
-	for _, line := range lines {
-		history := []int{}
-
-		for _, numberText := range strings.Split(line, " ") {
-			number, err := strconv.Atoi(numberText)
-			if err != nil {
-				return "", err
-			}
-			history = append(history, number)
-		}
-
-		histories = append(histories, history)
+	histories, err := ParseHistories(&input)
+	if err != nil {
+		return "", err
 	}
 
 	sum := 0
 	for _, history := range histories {
-		lastValue := Extrapolate(history)
+		lastValue := Extrapolate(history, false)
 		sum += lastValue
 	}
 
@@ -56,10 +43,21 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	histories, err := ParseHistories(&input)
+	if err != nil {
+		return "", err
+	}
+
+	sum := 0
+	for _, history := range histories {
+		lastValue := Extrapolate(history, true)
+		sum += lastValue
+	}
+
+	return strconv.Itoa(sum), nil
 }
 
-func Extrapolate(history []int) int {
+func Extrapolate(history []int, backward bool) int {
 	rows := [][]int{
 		history,
 	}
@@ -85,6 +83,12 @@ func Extrapolate(history []int) int {
 
 	slices.Reverse(rows)
 
+	if backward {
+		for i := range rows {
+			slices.Reverse(rows[i])
+		}
+	}
+
 	for depth, row := range rows {
 		if depth == 0 {
 			rows[depth] = append(row, row[0])
@@ -92,7 +96,11 @@ func Extrapolate(history []int) int {
 			prevRow := rows[depth-1]
 			prevRowLast := prevRow[len(prevRow)-1]
 			rowLast := row[len(prevRow)-1]
-			rows[depth] = append(row, rowLast+prevRowLast)
+			nextValue := rowLast + prevRowLast
+			if backward {
+				nextValue = rowLast - prevRowLast
+			}
+			rows[depth] = append(row, nextValue)
 		}
 	}
 
@@ -100,4 +108,26 @@ func Extrapolate(history []int) int {
 	lastValue := lastRow[len(lastRow)-1]
 
 	return lastValue
+}
+
+func ParseHistories(input *string) ([][]int, error) {
+	histories := [][]int{}
+
+	lines := aoc_util.SplitLines(*input)
+
+	for _, line := range lines {
+		history := []int{}
+
+		for _, numberText := range strings.Split(line, " ") {
+			number, err := strconv.Atoi(numberText)
+			if err != nil {
+				return histories, err
+			}
+			history = append(history, number)
+		}
+
+		histories = append(histories, history)
+	}
+
+	return histories, nil
 }
