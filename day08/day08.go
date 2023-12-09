@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync/atomic"
 )
 
 //go:embed input.txt
@@ -50,17 +49,11 @@ func Part01(input string) (string, error) {
 	}
 
 	nextNode := nodes[startNodeName]
-	instructionIndex := 0
 	counter := 0
+
 	for {
-		instruction := instructionText[instructionIndex : instructionIndex+1]
-
-		instructionIndex++
+		instruction := instructionText[counter%len(instructionText) : counter%len(instructionText)+1]
 		counter++
-
-		if instructionIndex >= len(instructionText) {
-			instructionIndex = 0
-		}
 
 		if instruction == "L" {
 			nextNode = nodes[nextNode.Left]
@@ -79,15 +72,6 @@ func Part01(input string) (string, error) {
 func Part02(input string) (string, error) {
 	instructionText, nodeText, _ := strings.Cut(input, "\n\n")
 
-	instructions := []int{}
-	for i := 0; i < len(instructionText); i++ {
-		if instructionText[i:i+1] == "L" {
-			instructions = append(instructions, 0)
-		} else {
-			instructions = append(instructions, 1)
-		}
-	}
-
 	nodeMatcher := regexp.MustCompile(`(\w{3})`)
 	nodes := map[string]Node{}
 	lines := aoc_util.SplitLines(nodeText)
@@ -104,59 +88,50 @@ func Part02(input string) (string, error) {
 		}
 	}
 
-	stepChan := make(chan int)
-	foundChan := make(chan bool)
-
+	counters := []int{}
 	for _, startNode := range startNodes {
-		go nodeStepper(startNode, &nodes, stepChan, foundChan)
-	}
+		nextNode := nodes[startNode.Name]
+		counter := 0
 
-	steps := 0
-	found := atomic.Uint32{}
+		for {
+			instruction := instructionText[counter%len(instructionText) : counter%len(instructionText)+1]
+			counter++
 
-	for {
-		instruction := instructions[steps%len(instructions)]
-		steps++
+			if instruction == "L" {
+				nextNode = nodes[nextNode.Left]
+			} else {
+				nextNode = nodes[nextNode.Right]
+			}
 
-		for range startNodes {
-			stepChan <- instruction
-		}
-
-		for range startNodes {
-			if <-foundChan {
-				found.Add(1)
+			if nextNode.Name[2:3] == "Z" {
+				counters = append(counters, counter)
+				break
 			}
 		}
-
-		if int(found.Load()) == len(startNodes) {
-			break
-		} else {
-			found.Store(0)
-		}
 	}
 
-	return strconv.Itoa(steps), nil
+	lcm := LCM(counters[0], counters[1], counters[2:]...)
+
+	return strconv.Itoa(lcm), nil
 }
 
-func nodeStepper(
-	startNode *Node,
-	nodes *map[string]Node,
-	stepChan <-chan int,
-	foundChan chan<- bool,
-) {
-	nextNode := *startNode
-
-	for step := range stepChan {
-		if step == 0 {
-			nextNode = (*nodes)[nextNode.Left]
-		} else {
-			nextNode = (*nodes)[nextNode.Right]
-		}
-
-		if nextNode.Name[2:3] == "Z" {
-			foundChan <- true
-		} else {
-			foundChan <- false
-		}
+// greatest common divisor (GCD) via Euclidean algorithm
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
 	}
+	return a
+}
+
+// find Least Common Multiple (LCM) via GCD
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
+	return result
 }
