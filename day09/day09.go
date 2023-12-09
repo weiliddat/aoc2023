@@ -3,6 +3,7 @@ package day09
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -130,4 +131,45 @@ func ParseHistories(input *string) ([][]int, error) {
 	}
 
 	return histories, nil
+}
+
+func Part01Lagrange(input string) (string, error) {
+	histories, err := ParseHistories(&input)
+	if err != nil {
+		return "", err
+	}
+
+	sum := 0
+	for _, history := range histories {
+		lastValue := Lagrange(history)
+		sum += lastValue
+	}
+
+	return strconv.Itoa(sum), nil
+}
+
+// https://en.wikipedia.org/wiki/Lagrange_polynomial
+// https://mathworld.wolfram.com/LagrangeInterpolatingPolynomial.html
+func Lagrange(history []int) int {
+	x := len(history)
+
+	sum := 0
+
+	for j, y := range history {
+		sum += Pj(j, x, y)
+	}
+
+	return sum
+}
+
+func Pj(j, n, y int) int {
+	prod := float64(y)
+
+	for k := 0; k < n; k++ {
+		if k != j {
+			prod = prod * float64(n-k) / float64(j-k)
+		}
+	}
+
+	return int(math.Round(prod))
 }
