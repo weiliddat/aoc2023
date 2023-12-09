@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 //go:embed input.txt
@@ -76,5 +77,86 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	instructionText, nodeText, _ := strings.Cut(input, "\n\n")
+
+	instructions := []int{}
+	for i := 0; i < len(instructionText); i++ {
+		if instructionText[i:i+1] == "L" {
+			instructions = append(instructions, 0)
+		} else {
+			instructions = append(instructions, 1)
+		}
+	}
+
+	nodeMatcher := regexp.MustCompile(`(\w{3})`)
+	nodes := map[string]Node{}
+	lines := aoc_util.SplitLines(nodeText)
+	for _, line := range lines {
+		matches := nodeMatcher.FindAllString(line, -1)
+		node := Node{matches[0], matches[1], matches[2]}
+		nodes[node.Name] = node
+	}
+
+	startNodes := []*Node{}
+	for _, node := range nodes {
+		if node.Name[2:3] == "A" {
+			startNodes = append(startNodes, &node)
+		}
+	}
+
+	stepChan := make(chan int)
+	foundChan := make(chan bool)
+
+	for _, startNode := range startNodes {
+		go nodeStepper(startNode, &nodes, stepChan, foundChan)
+	}
+
+	steps := 0
+	found := atomic.Uint32{}
+
+	for {
+		instruction := instructions[steps%len(instructions)]
+		steps++
+
+		for range startNodes {
+			stepChan <- instruction
+		}
+
+		for range startNodes {
+			if <-foundChan {
+				found.Add(1)
+			}
+		}
+
+		if int(found.Load()) == len(startNodes) {
+			break
+		} else {
+			found.Store(0)
+		}
+	}
+
+	return strconv.Itoa(steps), nil
+}
+
+func nodeStepper(
+	startNode *Node,
+	nodes *map[string]Node,
+	stepChan <-chan int,
+	foundChan chan<- bool,
+) {
+	nextNode := *startNode
+
+	for step := range stepChan {
+		if step == 0 {
+			nextNode = (*nodes)[nextNode.Left]
+		} else {
+			nextNode = (*nodes)[nextNode.Right]
+		}
+
+		if nextNode.Name[2:3] == "Z" {
+			foundChan <- true
+		} else {
+			foundChan <- false
+		}
+	}
 }
