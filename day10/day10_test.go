@@ -44,14 +44,113 @@ func TestPart02(t *testing.T) {
 	}
 }
 
-func BenchmarkParseToSlices(b *testing.B) {
+func BenchmarkNewTileMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		day10.Part01(day10.Input)
+		t := day10.NewTileMap(&day10.Input)
+		t.Get(1, 1)
+		t.Get(2, 2)
 	}
 }
 
-func BenchmarkNewTileMap(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		day10.NewTileMap(&day10.Input)
+func TestTileMap(t *testing.T) {
+	tilemap := day10.NewTileMap(&testInput01)
+
+	expected := "."
+	actual, found := tilemap.Get(0, 0)
+	if !found {
+		t.Errorf("Expected %#v got %#v", true, found)
+	}
+	if expected != *actual.S {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = "."
+	actual, found = tilemap.Get(4, 4)
+	if !found {
+		t.Errorf("Expected %#v got %#v", true, found)
+	}
+	if expected != *actual.S {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = "S"
+	actual, found = tilemap.Get(1, 1)
+	if !found {
+		t.Errorf("Expected %#v got %#v", true, found)
+	}
+	if expected != *actual.S {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = "J"
+	actual, found = tilemap.Get(3, 3)
+	if !found {
+		t.Errorf("Expected %#v got %#v", true, found)
+	}
+	if expected != *actual.S {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = ""
+	actual, found = tilemap.Get(5, 1)
+	if found {
+		t.Errorf("Expected %#v got %#v", false, found)
+	}
+
+	expected = ""
+	actual, found = tilemap.Get(1, 5)
+	if found {
+		t.Errorf("Expected %#v got %#v", false, found)
+	}
+
+	expected = ""
+	actual, found = tilemap.Get(-1, 5)
+	if found {
+		t.Errorf("Expected %#v got %#v", false, found)
+	}
+
+	expected = ""
+	actual, found = tilemap.Get(3, -2)
+	if found {
+		t.Errorf("Expected %#v got %#v", false, found)
+	}
+
+	expectedX := 1
+	expectedY := 1
+	actualX, actualY := tilemap.Find("S")
+	if expectedX != actualX || expectedY != actualY {
+		t.Errorf(
+			"Expected %#v, %#v got %#v, %#v",
+			expectedX,
+			expectedY,
+			actualX,
+			actualY,
+		)
+	}
+
+	expectedX = 0
+	expectedY = 0
+	actualX, actualY = tilemap.Find(".")
+	if expectedX != actualX || expectedY != actualY {
+		t.Errorf(
+			"Expected %#v, %#v got %#v, %#v",
+			expectedX,
+			expectedY,
+			actualX,
+			actualY,
+		)
+	}
+
+	expectedX = -1
+	expectedY = -1
+	actualX, actualY = tilemap.Find("F")
+	if expectedX != actualX || expectedY != actualY {
+		t.Errorf(
+			"Expected %#v, %#v got %#v, %#v",
+			expectedX,
+			expectedY,
+			actualX,
+			actualY,
+		)
 	}
 }

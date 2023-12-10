@@ -1,8 +1,8 @@
 package day10
 
 import (
-	"aoc2023/aoc_util"
 	_ "embed"
+	"errors"
 	"strings"
 )
 
@@ -30,31 +30,70 @@ type TileMap struct {
 	length int
 }
 
+type Tile struct {
+	S *string
+	X int
+	Y int
+}
+
+type Path []Tile
+
 func Part01(input string) (string, error) {
+	tilemap := NewTileMap(&input)
+
+	start := "S"
+	startX, startY := tilemap.Find(start)
+	if startX == -1 || startY == -1 {
+		return "", errors.New("could not find start")
+	}
+
+	// paths := []Path{}
+
+	// // check each direction for valid pipes
+	// tile, tileExists := tilemap.Get(startX, startY-1)
+	// if tileExists {
+	// 	if tile == "|" || tile == "7" || tile == "F" {
+	// 		paths = append(paths, Path{
+	// 			Tile{&start, startX, startY},
+	// 			Tile{&tile, startX, startY - 1},
+	// 		})
+	// 	}
+	// }
+	// tile, tileExists = tilemap.Get(startX+1, startY)
+	// if tileExists {
+	// 	if tile == "-" || tile == "7" || tile == "J" {
+	// 		paths = append(paths, Path{
+	// 			Tile{&start, startX, startY},
+	// 			Tile{&tile, startX + 1, startY},
+	// 		})
+	// 	}
+	// }
+	// tile, tileExists = tilemap.Get(startX, startY+1)
+	// if tileExists {
+	// 	if tile == "|" || tile == "L" || tile == "J" {
+	// 		paths = append(paths, Path{
+	// 			Tile{&start, startX, startY},
+	// 			Tile{&tile, startX, startY + 1},
+	// 		})
+	// 	}
+	// }
+	// tile, tileExists = tilemap.Get(startX-1, startY)
+	// if tileExists {
+	// 	if tile == "-" || tile == "L" || tile == "F" {
+	// 		paths = append(paths, Path{
+	// 			Tile{&start, startX, startY},
+	// 			Tile{&tile, startX - 1, startY},
+	// 		})
+	// 	}
+	// }
+
+	// get next tile
+
 	return "", nil
 }
 
 func Part02(input string) (string, error) {
 	return "", nil
-}
-
-func ParseToSlices(input *string) [][]rune {
-	lines := aoc_util.SplitLines(*input)
-
-	tilemap := [][]rune{}
-
-	for y, line := range lines {
-		if len(tilemap)-1 < y {
-			row := []rune{}
-			tilemap = append(tilemap, row)
-		}
-
-		for _, tile := range line {
-			tilemap[y] = append(tilemap[y], tile)
-		}
-	}
-
-	return tilemap
 }
 
 func NewTileMap(input *string) TileMap {
@@ -80,7 +119,54 @@ func NewTileMap(input *string) TileMap {
 	return tilemap
 }
 
-func (t *TileMap) Get(x, y int) (string, bool) {
+func (t *TileMap) Get(x, y int) (Tile, bool) {
+	tile := Tile{}
 
-	return "", true
+	if y < 0 || y > len(t.tiles)-1 {
+		return tile, false
+	}
+
+	row := t.tiles[y]
+
+	if x < 0 || x > len(row)-1 {
+		return tile, false
+	}
+
+	s := row[x : x+1]
+	tile.S = &s
+	tile.X = x
+	tile.Y = y
+
+	return tile, true
+}
+
+func (t *TileMap) Find(tile string) (int, int) {
+	for y, row := range t.tiles {
+		index := strings.Index(row, tile)
+		if index > -1 {
+			return index, y
+		}
+	}
+
+	return -1, -1
+}
+
+func (p *Path) AppendNext(t *TileMap) {
+	// tile := (*p)[len(*p)-1]
+	// prev := (*p)[len(*p)-2]
+
+	// if *tile.S == "|" {
+	// 	north, exists := t.Get(tile.X, tile.Y-1)
+	// 	if exists && prev.X != tile.X && prev.Y != tile.Y-1 {
+	// 		if north == "|" || north == "7" || north == "F" {
+	// 			*p = append(*p, Tile{&north, tile.X, tile.Y - 1})
+	// 		}
+	// 	}
+	// 	south, exists := t.Get(tile.X, tile.Y+1)
+	// 	if exists && prev.X != tile.X && prev.Y != tile.Y+1 {
+	// 		if south == "|" || south == "J" || south == "L" {
+	// 			*p = append(*p, Tile{&south, tile.X, tile.Y - 1})
+	// 		}
+	// 	}
+	// }
 }
