@@ -3,6 +3,7 @@ package day10
 import (
 	_ "embed"
 	"errors"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -100,7 +101,50 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	tilemap := NewTileMap(input)
+
+	start, found := tilemap.Find("S")
+	if !found {
+		return "", errors.New("could not find start")
+	}
+
+	path := Path{start}
+
+	// check each direction for valid pipes
+	tile, tileExists := tilemap.Get(start.X, start.Y-1)
+	if len(path) <= 1 && tileExists && (tile.S == "|" || tile.S == "7" || tile.S == "F") {
+		path = append(path, tile)
+	}
+	tile, tileExists = tilemap.Get(start.X+1, start.Y)
+	if len(path) <= 1 && tileExists && (tile.S == "-" || tile.S == "7" || tile.S == "J") {
+		path = append(path, tile)
+	}
+	tile, tileExists = tilemap.Get(start.X, start.Y+1)
+	if len(path) <= 1 && tileExists && (tile.S == "|" || tile.S == "L" || tile.S == "J") {
+		path = append(path, tile)
+	}
+	tile, tileExists = tilemap.Get(start.X-1, start.Y)
+	if len(path) <= 1 && tileExists && (tile.S == "-" || tile.S == "L" || tile.S == "F") {
+		path = append(path, tile)
+	}
+
+	// get next tile
+	for {
+		next := path.FindNext(&tilemap)
+		if next == nil {
+			return "", errors.New("could not find next value")
+		} else {
+			path = append(path, *next)
+		}
+
+		if *next == start {
+			break
+		}
+	}
+
+	internalPoints := path.InternalPoints()
+
+	return strconv.Itoa(internalPoints), nil
 }
 
 func NewTileMap(input string) TileMap {
@@ -171,7 +215,7 @@ func (p *Path) FindNext(t *TileMap) *Tile {
 	if curr.S == "|" || curr.S == "J" || curr.S == "L" {
 		next, found := t.Get(curr.X, curr.Y-1)
 		if found && !(prev.X == next.X && prev.Y == next.Y) {
-			if next.S == "|" || next.S == "7" || next.S == "F" {
+			if next.S == "|" || next.S == "7" || next.S == "F" || next.S == "S" {
 				return &next
 			}
 		}
@@ -181,7 +225,7 @@ func (p *Path) FindNext(t *TileMap) *Tile {
 	if curr.S == "|" || curr.S == "7" || curr.S == "F" {
 		next, found := t.Get(curr.X, curr.Y+1)
 		if found && !(prev.X == next.X && prev.Y == next.Y) {
-			if next.S == "|" || next.S == "J" || next.S == "L" {
+			if next.S == "|" || next.S == "J" || next.S == "L" || next.S == "S" {
 				return &next
 			}
 		}
@@ -191,7 +235,7 @@ func (p *Path) FindNext(t *TileMap) *Tile {
 	if curr.S == "-" || curr.S == "L" || curr.S == "F" {
 		next, found := t.Get(curr.X+1, curr.Y)
 		if found && !(prev.X == next.X && prev.Y == next.Y) {
-			if next.S == "-" || next.S == "7" || next.S == "J" {
+			if next.S == "-" || next.S == "7" || next.S == "J" || next.S == "S" {
 				return &next
 			}
 		}
@@ -201,11 +245,33 @@ func (p *Path) FindNext(t *TileMap) *Tile {
 	if curr.S == "-" || curr.S == "7" || curr.S == "J" {
 		next, found := t.Get(curr.X-1, curr.Y)
 		if found && !(prev.X == next.X && prev.Y == next.Y) {
-			if next.S == "-" || next.S == "L" || next.S == "F" {
+			if next.S == "-" || next.S == "L" || next.S == "F" || next.S == "S" {
 				return &next
 			}
 		}
 	}
 
 	return nil
+}
+
+// https://en.wikipedia.org/wiki/Shoelace_formula#Shoelace_formula
+// https://rosettacode.org/wiki/Shoelace_formula_for_polygonal_area#Go
+func (p Path) Area() float64 {
+	sum := 0.
+	p0 := p[len(p)-1]
+	for _, p1 := range p {
+		sum += float64(p0.Y)*float64(p1.X) - float64(p0.X)*float64(p1.Y)
+		p0 = p1
+	}
+	if sum < 0 {
+		sum = -sum
+	}
+	return sum / 2
+}
+
+// https://en.wikipedia.org/wiki/Pick%27s_theorem
+func (p Path) InternalPoints() int {
+	area := p.Area()
+	length := float64(len(p))
+	return int(math.Round(area - length/2 + 1))
 }
