@@ -3,6 +3,7 @@ package day10
 import (
 	_ "embed"
 	"errors"
+	"strconv"
 	"strings"
 )
 
@@ -26,12 +27,12 @@ func Solve(input string) (string, string, error) {
 }
 
 type TileMap struct {
-	tiles  []string
+	Tiles  []string
 	length int
 }
 
 type Tile struct {
-	S *string
+	S string
 	X int
 	Y int
 }
@@ -39,75 +40,81 @@ type Tile struct {
 type Path []Tile
 
 func Part01(input string) (string, error) {
-	tilemap := NewTileMap(&input)
+	tilemap := NewTileMap(input)
 
-	start := "S"
-	startX, startY := tilemap.Find(start)
-	if startX == -1 || startY == -1 {
+	start, found := tilemap.Find("S")
+	if !found {
 		return "", errors.New("could not find start")
 	}
 
-	// paths := []Path{}
+	paths := []*Path{}
 
-	// // check each direction for valid pipes
-	// tile, tileExists := tilemap.Get(startX, startY-1)
-	// if tileExists {
-	// 	if tile == "|" || tile == "7" || tile == "F" {
-	// 		paths = append(paths, Path{
-	// 			Tile{&start, startX, startY},
-	// 			Tile{&tile, startX, startY - 1},
-	// 		})
-	// 	}
-	// }
-	// tile, tileExists = tilemap.Get(startX+1, startY)
-	// if tileExists {
-	// 	if tile == "-" || tile == "7" || tile == "J" {
-	// 		paths = append(paths, Path{
-	// 			Tile{&start, startX, startY},
-	// 			Tile{&tile, startX + 1, startY},
-	// 		})
-	// 	}
-	// }
-	// tile, tileExists = tilemap.Get(startX, startY+1)
-	// if tileExists {
-	// 	if tile == "|" || tile == "L" || tile == "J" {
-	// 		paths = append(paths, Path{
-	// 			Tile{&start, startX, startY},
-	// 			Tile{&tile, startX, startY + 1},
-	// 		})
-	// 	}
-	// }
-	// tile, tileExists = tilemap.Get(startX-1, startY)
-	// if tileExists {
-	// 	if tile == "-" || tile == "L" || tile == "F" {
-	// 		paths = append(paths, Path{
-	// 			Tile{&start, startX, startY},
-	// 			Tile{&tile, startX - 1, startY},
-	// 		})
-	// 	}
-	// }
+	// check each direction for valid pipes
+	tile, tileExists := tilemap.Get(start.X, start.Y-1)
+	if tileExists {
+		if tile.S == "|" || tile.S == "7" || tile.S == "F" {
+			paths = append(paths, &Path{start, tile})
+		}
+	}
+	tile, tileExists = tilemap.Get(start.X+1, start.Y)
+	if tileExists {
+		if tile.S == "-" || tile.S == "7" || tile.S == "J" {
+			paths = append(paths, &Path{start, tile})
+		}
+	}
+	tile, tileExists = tilemap.Get(start.X, start.Y+1)
+	if tileExists {
+		if tile.S == "|" || tile.S == "L" || tile.S == "J" {
+			paths = append(paths, &Path{start, tile})
+		}
+	}
+	tile, tileExists = tilemap.Get(start.X-1, start.Y)
+	if tileExists {
+		if tile.S == "-" || tile.S == "L" || tile.S == "F" {
+			paths = append(paths, &Path{start, tile})
+		}
+	}
 
 	// get next tile
+	for {
+		for _, path := range paths {
+			next := path.FindNext(&tilemap)
+			if next != nil {
+				*path = append(*path, *next)
+			} else {
+				return "", errors.New("could not find next value")
+			}
+		}
 
-	return "", nil
+		firstPath := *paths[0]
+		secondPath := *paths[1]
+
+		if firstPath[len(firstPath)-1] == secondPath[len(secondPath)-1] {
+			break
+		}
+	}
+
+	length := len(*paths[0]) - 1 // exclude start
+
+	return strconv.Itoa(length), nil
 }
 
 func Part02(input string) (string, error) {
 	return "", nil
 }
 
-func NewTileMap(input *string) TileMap {
-	length := strings.Index(*input, "\n")
+func NewTileMap(input string) TileMap {
+	length := strings.Index(input, "\n")
 	tilemap := TileMap{
 		length: length,
-		tiles:  make([]string, 0, len(*input)/(length+1)),
+		Tiles:  make([]string, 0, len(input)/(length+1)),
 	}
 
-	s := *input
+	s := input
 	for {
 		before, after, _ := strings.Cut(s, "\n")
 
-		tilemap.tiles = append(tilemap.tiles, before)
+		tilemap.Tiles = append(tilemap.Tiles, before)
 
 		if len(after) < length {
 			break
@@ -119,54 +126,86 @@ func NewTileMap(input *string) TileMap {
 	return tilemap
 }
 
-func (t *TileMap) Get(x, y int) (Tile, bool) {
+func (tm *TileMap) Get(x, y int) (Tile, bool) {
 	tile := Tile{}
 
-	if y < 0 || y > len(t.tiles)-1 {
+	if y < 0 || y > len(tm.Tiles)-1 {
 		return tile, false
 	}
 
-	row := t.tiles[y]
+	row := tm.Tiles[y]
 
 	if x < 0 || x > len(row)-1 {
 		return tile, false
 	}
 
 	s := row[x : x+1]
-	tile.S = &s
+	tile.S = s
 	tile.X = x
 	tile.Y = y
 
 	return tile, true
 }
 
-func (t *TileMap) Find(tile string) (int, int) {
-	for y, row := range t.tiles {
-		index := strings.Index(row, tile)
+func (tm *TileMap) Find(s string) (Tile, bool) {
+	tile := Tile{}
+
+	for y, row := range tm.Tiles {
+		index := strings.Index(row, s)
 		if index > -1 {
-			return index, y
+			tile.S = s
+			tile.X = index
+			tile.Y = y
+			return tile, true
 		}
 	}
 
-	return -1, -1
+	return tile, false
 }
 
-func (p *Path) AppendNext(t *TileMap) {
-	// tile := (*p)[len(*p)-1]
-	// prev := (*p)[len(*p)-2]
+func (p *Path) FindNext(t *TileMap) *Tile {
+	curr := (*p)[len(*p)-1]
+	prev := (*p)[len(*p)-2]
 
-	// if *tile.S == "|" {
-	// 	north, exists := t.Get(tile.X, tile.Y-1)
-	// 	if exists && prev.X != tile.X && prev.Y != tile.Y-1 {
-	// 		if north == "|" || north == "7" || north == "F" {
-	// 			*p = append(*p, Tile{&north, tile.X, tile.Y - 1})
-	// 		}
-	// 	}
-	// 	south, exists := t.Get(tile.X, tile.Y+1)
-	// 	if exists && prev.X != tile.X && prev.Y != tile.Y+1 {
-	// 		if south == "|" || south == "J" || south == "L" {
-	// 			*p = append(*p, Tile{&south, tile.X, tile.Y - 1})
-	// 		}
-	// 	}
-	// }
+	// check north
+	if curr.S == "|" || curr.S == "J" || curr.S == "L" {
+		next, found := t.Get(curr.X, curr.Y-1)
+		if found && !(prev.X == next.X && prev.Y == next.Y) {
+			if next.S == "|" || next.S == "7" || next.S == "F" {
+				return &next
+			}
+		}
+	}
+
+	// check south
+	if curr.S == "|" || curr.S == "7" || curr.S == "F" {
+		next, found := t.Get(curr.X, curr.Y+1)
+		if found && !(prev.X == next.X && prev.Y == next.Y) {
+			if next.S == "|" || next.S == "J" || next.S == "L" {
+				return &next
+			}
+		}
+	}
+
+	// check east
+	if curr.S == "-" || curr.S == "L" || curr.S == "F" {
+		next, found := t.Get(curr.X+1, curr.Y)
+		if found && !(prev.X == next.X && prev.Y == next.Y) {
+			if next.S == "-" || next.S == "7" || next.S == "J" {
+				return &next
+			}
+		}
+	}
+
+	// check west
+	if curr.S == "-" || curr.S == "7" || curr.S == "J" {
+		next, found := t.Get(curr.X-1, curr.Y)
+		if found && !(prev.X == next.X && prev.Y == next.Y) {
+			if next.S == "-" || next.S == "L" || next.S == "F" {
+				return &next
+			}
+		}
+	}
+
+	return nil
 }
