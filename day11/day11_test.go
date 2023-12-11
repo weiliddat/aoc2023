@@ -30,11 +30,9 @@ func TestPart01(t *testing.T) {
 	}
 }
 
-var testInput02 = ``
-
 func TestPart02(t *testing.T) {
-	expected := ""
-	actual, err := day11.Part02(testInput02)
+	expected := "82000210"
+	actual, err := day11.Part02(testInput01)
 	if err != nil {
 		t.Error(err)
 	}
@@ -77,4 +75,39 @@ func TestParseAndExpand(t *testing.T) {
 		t.Errorf("Expected %#v got %#v", expected, actual)
 	}
 
+}
+
+func TestFindDistanceBetweenGalaxies(t *testing.T) {
+	expected := 374
+	actual := day11.FindDistBetweenGalaxies(testInput01, 2)
+
+	if expected != actual {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = 1030
+	actual = day11.FindDistBetweenGalaxies(testInput01, 10)
+
+	if expected != actual {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+
+	expected = 8410
+	actual = day11.FindDistBetweenGalaxies(testInput01, 100)
+
+	if expected != actual {
+		t.Errorf("Expected %#v got %#v", expected, actual)
+	}
+}
+
+func BenchmarkPart01(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		day11.Part01(day11.Input)
+	}
+}
+
+func BenchmarkPart02(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		day11.Part02(day11.Input)
+	}
 }
