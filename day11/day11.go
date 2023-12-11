@@ -59,44 +59,28 @@ func Part01(input string) (string, error) {
 func FindDistBetweenGalaxies(input string, emptySpaceMult int) int {
 	rows := aoc_util.SplitLines(input)
 
-	emptyRowMap := map[int]bool{}
-	emptyColMap := map[int]bool{}
+	emptyRows := []int{}
+	emptyCols := []int{}
 	galaxies := []point{}
 
-	for y := range rows {
-		emptyRowMap[y] = true
-	}
-
 	for x := range rows[0] {
-		emptyColMap[x] = true
+		emptyCols = append(emptyCols, x)
 	}
 
 	for y, row := range rows {
-		for x := 0; x < len(row); x++ {
-			_, ok := emptyColMap[x]
-			if !ok {
-				emptyColMap[x] = true
-			}
+		if IsAll(row, ".") {
+			emptyRows = append(emptyRows, y)
+		}
 
+		for x := 0; x < len(row); x++ {
 			if row[x:x+1] == "#" {
 				galaxies = append(galaxies, point{x, y})
-				emptyRowMap[y] = false
-				emptyColMap[x] = false
+
+				index := slices.Index(emptyCols, x)
+				if index > -1 {
+					emptyCols = slices.Delete(emptyCols, index, index+1)
+				}
 			}
-		}
-	}
-
-	emptyCols := []int{}
-	for k := range emptyColMap {
-		if emptyColMap[k] {
-			emptyCols = append(emptyCols, k)
-		}
-	}
-
-	emptyRows := []int{}
-	for k := range emptyRowMap {
-		if emptyRowMap[k] {
-			emptyRows = append(emptyRows, k)
 		}
 	}
 
