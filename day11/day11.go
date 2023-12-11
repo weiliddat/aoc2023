@@ -59,27 +59,44 @@ func Part01(input string) (string, error) {
 func FindDistBetweenGalaxies(input string, emptySpaceMult int) int {
 	rows := aoc_util.SplitLines(input)
 
-	emptyRows := map[int]bool{}
-	emptyCols := map[int]bool{}
+	emptyRowMap := map[int]bool{}
+	emptyColMap := map[int]bool{}
 	galaxies := []point{}
 
-	for y, row := range rows {
-		_, ok := emptyRows[y]
-		if !ok {
-			emptyRows[y] = true
-		}
+	for y := range rows {
+		emptyRowMap[y] = true
+	}
 
+	for x := range rows[0] {
+		emptyColMap[x] = true
+	}
+
+	for y, row := range rows {
 		for x := 0; x < len(row); x++ {
-			_, ok := emptyCols[x]
+			_, ok := emptyColMap[x]
 			if !ok {
-				emptyCols[x] = true
+				emptyColMap[x] = true
 			}
 
 			if row[x:x+1] == "#" {
 				galaxies = append(galaxies, point{x, y})
-				emptyRows[y] = false
-				emptyCols[x] = false
+				emptyRowMap[y] = false
+				emptyColMap[x] = false
 			}
+		}
+	}
+
+	emptyCols := []int{}
+	for k := range emptyColMap {
+		if emptyColMap[k] {
+			emptyCols = append(emptyCols, k)
+		}
+	}
+
+	emptyRows := []int{}
+	for k := range emptyRowMap {
+		if emptyRowMap[k] {
+			emptyRows = append(emptyRows, k)
 		}
 	}
 
@@ -93,11 +110,10 @@ func FindDistBetweenGalaxies(input string, emptySpaceMult int) int {
 				a = other.x
 				b = galaxy.x
 			}
-			for i := a; i < b; i++ {
-				if emptyCols[i] {
-					sum += emptySpaceMult
-				} else {
-					sum += 1
+			sum += b - a
+			for _, x := range emptyCols {
+				if x > a && x < b {
+					sum += emptySpaceMult - 1
 				}
 			}
 
@@ -108,11 +124,10 @@ func FindDistBetweenGalaxies(input string, emptySpaceMult int) int {
 				a = other.y
 				b = galaxy.y
 			}
-			for i := a; i < b; i++ {
-				if emptyRows[i] {
-					sum += emptySpaceMult
-				} else {
-					sum += 1
+			sum += b - a
+			for _, y := range emptyRows {
+				if y > a && y < b {
+					sum += emptySpaceMult - 1
 				}
 			}
 		}
