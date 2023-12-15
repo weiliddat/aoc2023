@@ -3,7 +3,6 @@ package day12
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -47,6 +46,7 @@ func Part01(input string) (string, error) {
 }
 
 func fit(record string, damagedSprings []int, depth string) int {
+	// fmt.Println(depth, "fting", record, damagedSprings)
 	total := 0
 
 	// if there are no remaining springs and no remaining recorded springs
@@ -77,16 +77,14 @@ func fit(record string, damagedSprings []int, depth string) int {
 				}
 			}
 
-			// cannot fit if prev char is a spring
+			// cannot fit if prev chars contains a spring
 			// usually only for first match since subsequent matches
 			// we check for a separator
-			if i > 0 {
-				if record[i-1:i] == "#" {
-					continue
-				}
+			if strings.Contains(record[0:i], "#") {
+				continue
 			}
 
-			fmt.Println(depth, "found", record, "at", i, "len", spring)
+			// fmt.Println(depth, "found", record, "at", i, "len", spring)
 			possible++
 
 			remainingSprings := damagedSprings[1:]
@@ -95,7 +93,7 @@ func fit(record string, damagedSprings []int, depth string) int {
 			if len(remainingSprings) == 0 {
 				// if there were remaining springs in the record, it doesn't fit
 				if strings.Contains(record[i+spring:], "#") {
-					return 0
+					possible = 0
 				}
 
 				total += possible
@@ -130,7 +128,7 @@ func fit(record string, damagedSprings []int, depth string) int {
 
 	}
 
-	fmt.Println(depth, "fit result", record, damagedSprings, total)
+	// fmt.Println(depth, "fit result", record, damagedSprings, total)
 	return total
 }
 
