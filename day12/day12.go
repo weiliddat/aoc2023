@@ -38,15 +38,38 @@ func Part01(input string) (string, error) {
 			return "", err
 		}
 
-		possible := fit(record, damagedSprings, "")
+		possible := fit(record, damagedSprings, fit)
 		sum += possible
 	}
 
 	return strconv.Itoa(sum), nil
 }
 
-func fit(record string, damagedSprings []int, depth string) int {
-	// fmt.Println(depth, "fting", record, damagedSprings)
+func memoize(fn fitFn) fitFn {
+	cache := map[string]int{}
+
+	return func(s string, ns []int, ffn fitFn) int {
+		args := "" + s
+		for i, n := range ns {
+			args += strconv.Itoa(n)
+			if i < len(ns)-1 {
+				args += ","
+			}
+		}
+
+		cacheResult, found := cache[args]
+		if found {
+			return cacheResult
+		}
+		result := fn(s, ns, ffn)
+		cache[args] = result
+		return result
+	}
+}
+
+type fitFn func(string, []int, fitFn) int
+
+func fit(record string, damagedSprings []int, fn fitFn) int {
 	total := 0
 
 	// if there are no remaining springs and no remaining recorded springs
@@ -84,7 +107,6 @@ func fit(record string, damagedSprings []int, depth string) int {
 				continue
 			}
 
-			// fmt.Println(depth, "found", record, "at", i, "len", spring)
 			possible++
 
 			remainingSprings := damagedSprings[1:]
@@ -108,7 +130,6 @@ func fit(record string, damagedSprings []int, depth string) int {
 				possible = 0
 				break
 			}
-			// fmt.Println(depth, "foundSp", record[i+spring:], "at", nextSeparator)
 			nextSeparator = nextSeparator + i + spring + 1
 
 			// offset of 1 needed after fitting spring as separator
@@ -121,16 +142,16 @@ func fit(record string, damagedSprings []int, depth string) int {
 				break
 			}
 
-			next := fit(record[nextSeparator:], remainingSprings, depth+"  ")
+			next := fn(record[nextSeparator:], remainingSprings, fn)
 			possible = possible * next
 			total += possible
 		}
-
 	}
 
-	// fmt.Println(depth, "fit result", record, damagedSprings, total)
 	return total
 }
+
+var memoizedFit = memoize(fit)
 
 func sum(numbers []int) int {
 	sum := 0
@@ -141,5 +162,30 @@ func sum(numbers []int) int {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	lines := aoc_util.SplitLines(input)
+
+	repeat := 5
+	sum := 0
+	for _, line := range lines {
+		record, springsText, _ := strings.Cut(line, " ")
+
+		unfoldedRecords := []string{}
+		unfoldedSprings := []string{}
+		for i := 0; i < repeat; i++ {
+			unfoldedRecords = append(unfoldedRecords, record)
+			unfoldedSprings = append(unfoldedSprings, springsText)
+		}
+		record = strings.Join(unfoldedRecords, "?")
+		springsText = strings.Join(unfoldedSprings, ",")
+
+		damagedSprings, err := aoc_util.StringToNums(springsText, ",")
+		if err != nil {
+			return "", err
+		}
+
+		possible := memoizedFit(record, damagedSprings, memoizedFit)
+		sum += possible
+	}
+
+	return strconv.Itoa(sum), nil
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-var testInput01 = `???.### 1,1,3
+var testInput = `???.### 1,1,3
 .??..??...?##. 1,1,3
 ?#?#?#?#?#?#?#? 1,3,1,6
 ????.#...#... 4,1,1
@@ -14,7 +14,7 @@ var testInput01 = `???.### 1,1,3
 
 func TestPart01(t *testing.T) {
 	expected := "21"
-	actual, err := Part01(testInput01)
+	actual, err := Part01(testInput)
 	if err != nil {
 		t.Error(err)
 	}
@@ -23,11 +23,9 @@ func TestPart01(t *testing.T) {
 	}
 }
 
-var testInput02 = ``
-
 func TestPart02(t *testing.T) {
-	expected := ""
-	actual, err := Part02(testInput02)
+	expected := "525152"
+	actual, err := Part02(testInput)
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,10 +61,22 @@ func TestFit(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.record, func(t *testing.T) {
-			actual := fit(tC.record, tC.springs, "")
+			actual := fit(tC.record, tC.springs, fit)
 			if tC.expected != actual {
 				t.Errorf("Expected %v got %v", tC.expected, actual)
 			}
 		})
+	}
+}
+
+func BenchmarkPart01(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Part01(testInput)
+	}
+}
+
+func BenchmarkPart02(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Part02(testInput)
 	}
 }
