@@ -2,6 +2,7 @@ package aoc_util
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -12,4 +13,18 @@ func SplitLines(input string) []string {
 		return len(line) == 0
 	})
 	return lines
+}
+
+func StringToNums(input string, sep string) ([]int, error) {
+	numbers := []int{}
+
+	for _, numStr := range strings.Split(input, ",") {
+		spring, err := strconv.Atoi(numStr)
+		if err != nil {
+			return numbers, err
+		}
+		numbers = append(numbers, spring)
+	}
+
+	return numbers, nil
 }

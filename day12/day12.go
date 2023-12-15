@@ -32,39 +32,31 @@ func Part01(input string) (string, error) {
 
 	sum := 0
 	for _, line := range lines {
-		possible, err := findPossible(line)
+		record, springsText, _ := strings.Cut(line, " ")
+
+		damagedSprings, err := aoc_util.StringToNums(springsText, ",")
 		if err != nil {
 			return "", err
 		}
+
+		possible := fit(record, damagedSprings, "")
 		sum += possible
 	}
 
-	return "", nil
-}
-
-func findPossible(input string) (int, error) {
-	conditionText, springsText, _ := strings.Cut(input, " ")
-
-	damagedSprings := []int{}
-	for _, springText := range strings.Split(springsText, ",") {
-		spring, err := strconv.Atoi(springText)
-		if err != nil {
-			return 0, err
-		}
-		damagedSprings = append(damagedSprings, spring)
-	}
-
-	fmt.Println(conditionText, damagedSprings)
-
-	return 0, nil
+	return strconv.Itoa(sum), nil
 }
 
 func fit(record string, damagedSprings []int, depth string) int {
 	total := 0
 
+	// if there are no remaining springs and no remaining recorded springs
+	if len(damagedSprings) == 0 && !strings.Contains(record, "#") {
+		return 1
+	}
+
 	// if remaining springs cannot possibly fit in the record by length
 	if sum(damagedSprings) > len(record)-strings.Count(record, ".") {
-		return total
+		return 0
 	}
 
 	for i := 0; i < len(record); i++ {
@@ -78,6 +70,22 @@ func fit(record string, damagedSprings []int, depth string) int {
 
 		here := record[i : i+spring]
 		if !strings.Contains(here, ".") {
+			// cannot fit if next char is also a spring
+			if len(record) > i+spring+1 {
+				if record[i+spring:i+spring+1] == "#" {
+					continue
+				}
+			}
+
+			// cannot fit if prev char is a spring
+			// usually only for first match since subsequent matches
+			// we check for a separator
+			if i > 0 {
+				if record[i-1:i] == "#" {
+					continue
+				}
+			}
+
 			fmt.Println(depth, "found", record, "at", i, "len", spring)
 			possible++
 
@@ -85,8 +93,13 @@ func fit(record string, damagedSprings []int, depth string) int {
 
 			// if we have no remaining springs to fit
 			if len(remainingSprings) == 0 {
+				// if there were remaining springs in the record, it doesn't fit
+				if strings.Contains(record[i+spring:], "#") {
+					return 0
+				}
+
 				total += possible
-				break
+				continue
 			}
 
 			// need to find next ?/. after current spring fit
@@ -97,7 +110,7 @@ func fit(record string, damagedSprings []int, depth string) int {
 				possible = 0
 				break
 			}
-			fmt.Println(depth, "foundSp", record[i+spring:], "at", nextSeparator)
+			// fmt.Println(depth, "foundSp", record[i+spring:], "at", nextSeparator)
 			nextSeparator = nextSeparator + i + spring + 1
 
 			// offset of 1 needed after fitting spring as separator
@@ -114,6 +127,7 @@ func fit(record string, damagedSprings []int, depth string) int {
 			possible = possible * next
 			total += possible
 		}
+
 	}
 
 	fmt.Println(depth, "fit result", record, damagedSprings, total)
