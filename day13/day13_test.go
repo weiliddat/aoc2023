@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var testInput01 = `#.##..##.
+var testInput = `#.##..##.
 ..#.##.#.
 ##......#
 ##......#
@@ -24,7 +24,7 @@ var testInput01 = `#.##..##.
 
 func TestPart01(t *testing.T) {
 	expected := "405"
-	actual, err := Part01(testInput01)
+	actual, err := Part01(testInput)
 	if err != nil {
 		t.Error(err)
 	}
@@ -33,11 +33,9 @@ func TestPart01(t *testing.T) {
 	}
 }
 
-var testInput02 = ``
-
 func TestPart02(t *testing.T) {
-	expected := ""
-	actual, err := Part02(testInput02)
+	expected := "400"
+	actual, err := Part02(testInput)
 	if err != nil {
 		t.Error(err)
 	}

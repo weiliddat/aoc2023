@@ -31,36 +31,11 @@ func Part01(input string) (string, error) {
 
 	sum := 0
 	for _, p := range patterns {
-		// check vertical reflections
 		rows := aoc_util.SplitLines(p)
+		vIndices := findVerticalReflections(rows)
 
-		vIndices := []int{}
-		for i := 1; i < len(rows[0]); i++ {
-			vIndices = append(vIndices, i)
-		}
-
-		for _, row := range rows {
-			vIndices = slices.DeleteFunc(vIndices, func(i int) bool {
-				a := row[:i]
-				b := row[i:]
-				return !isReflected(a, b)
-			})
-		}
-
-		// check horizontal reflections
 		cols := aoc_util.IntoColumns(rows)
-		hIndices := []int{}
-		for i := 1; i < len(cols[0]); i++ {
-			hIndices = append(hIndices, i)
-		}
-
-		for _, col := range cols {
-			hIndices = slices.DeleteFunc(hIndices, func(i int) bool {
-				a := col[:i]
-				b := col[i:]
-				return !isReflected(a, b)
-			})
-		}
+		hIndices := findHorizontalReflections(cols)
 
 		// add them up
 		for _, v := range vIndices {
@@ -75,7 +50,33 @@ func Part01(input string) (string, error) {
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	patterns := aoc_util.SplitBlocks(input)
+
+	sum := 0
+	for _, p := range patterns {
+		// within the collection of reflected indices
+		// the single smudge can be found by any index
+		// that's 1 less than its row/col length
+		rows := aoc_util.SplitLines(p)
+		vIndices := findReflectionIndices(rows)
+		vCounts := countIndices(vIndices)
+		for index, count := range vCounts {
+			if count == len(rows)-1 {
+				sum += index
+			}
+		}
+
+		cols := aoc_util.IntoColumns(rows)
+		hIndices := findReflectionIndices(cols)
+		hCounts := countIndices(hIndices)
+		for index, count := range hCounts {
+			if count == len(cols)-1 {
+				sum += (index * 100)
+			}
+		}
+	}
+
+	return strconv.Itoa(sum), nil
 }
 
 func isReflected(a, b string) bool {
@@ -93,4 +94,68 @@ func isReflected(a, b string) bool {
 	}
 
 	return true
+}
+
+func findVerticalReflections(rows []string) []int {
+	vIndices := []int{}
+	for i := 1; i < len(rows[0]); i++ {
+		vIndices = append(vIndices, i)
+	}
+
+	for _, row := range rows {
+		vIndices = slices.DeleteFunc(vIndices, func(i int) bool {
+			a := row[:i]
+			b := row[i:]
+			return !isReflected(a, b)
+		})
+	}
+
+	return vIndices
+}
+
+func findHorizontalReflections(cols []string) []int {
+	hIndices := []int{}
+	for i := 1; i < len(cols[0]); i++ {
+		hIndices = append(hIndices, i)
+	}
+
+	for _, col := range cols {
+		hIndices = slices.DeleteFunc(hIndices, func(i int) bool {
+			a := col[:i]
+			b := col[i:]
+			return !isReflected(a, b)
+		})
+	}
+
+	return hIndices
+}
+
+func findReflectionIndices(rows []string) [][]int {
+	indices := [][]int{}
+
+	for _, row := range rows {
+		rowIndices := []int{}
+		for i := 1; i < len(row); i++ {
+			a := row[:i]
+			b := row[i:]
+			if isReflected(a, b) {
+				rowIndices = append(rowIndices, i)
+			}
+		}
+		indices = append(indices, rowIndices)
+	}
+
+	return indices
+}
+
+func countIndices(indicesList [][]int) map[int]int {
+	counts := map[int]int{}
+
+	for _, indices := range indicesList {
+		for _, index := range indices {
+			counts[index]++
+		}
+	}
+
+	return counts
 }
