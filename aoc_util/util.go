@@ -15,10 +15,38 @@ func SplitLines(input string) []string {
 	return lines
 }
 
+// transpose rows into columns
+// assumes all rows have the same length
+func IntoColumns(rows []string) []string {
+	rowLength := len(rows[0])
+	cols := make([]string, 0, rowLength)
+
+	for ci := 0; ci < rowLength; ci++ {
+		cs := strings.Builder{}
+		for _, row := range rows {
+			cs.WriteByte(row[ci])
+		}
+		cols = append(cols, cs.String())
+	}
+
+	return cols
+}
+
+// split blocks
+func SplitBlocks(input string) []string {
+	blocks := strings.Split(input, "\n\n")
+
+	for bi := range blocks {
+		blocks[bi] = strings.TrimSpace(blocks[bi])
+	}
+
+	return blocks
+}
+
 func StringToNums(input string, sep string) ([]int, error) {
 	numbers := []int{}
 
-	for _, numStr := range strings.Split(input, ",") {
+	for _, numStr := range strings.Split(input, sep) {
 		spring, err := strconv.Atoi(numStr)
 		if err != nil {
 			return numbers, err
