@@ -3,7 +3,6 @@ package day16
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -35,114 +34,134 @@ const (
 	east
 	south
 	west
-	none
 )
 
-type Path struct {
-	tiles     []aoc_util.Tile
+type Step struct {
+	aoc_util.Tile
 	direction Direction
+}
+
+func (d Direction) String() string {
+	switch d {
+	case north:
+		return "^"
+	case south:
+		return "v"
+	case west:
+		return "<"
+	case east:
+		return ">"
+	default:
+		return "?"
+	}
+}
+
+func (s Step) String() string {
+	return fmt.Sprintf("%d %d %s", s.X, s.Y, s.direction)
 }
 
 func Part01(input string) (string, error) {
 	lightmap := aoc_util.NewTileMap(input)
 
-	entryTile, ok := lightmap.Get(0, 0)
-	if !ok {
-		return "", errors.New("cannot find starting tile")
+	entryStep := Step{
+		aoc_util.Tile{
+			S: ".",
+			X: -1,
+			Y: 0,
+		},
+		east,
 	}
-	entryPath := Path{
-		tiles:     []aoc_util.Tile{entryTile},
-		direction: east,
-	}
-	paths := []Path{entryPath}
 
+	stepsTaken := []Step{}
+	stepsToCheck := []Step{entryStep}
+	nextSteps := []Step{}
 	for {
-		remaining := false
+		for _, step := range stepsToCheck {
+			if slices.Contains(stepsTaken, step) {
+				continue
+			} else {
+				stepsTaken = append(stepsTaken, step)
+			}
 
-		// time.Sleep(time.Second * 2)
-		fmt.Println()
-		for i := range paths {
-			fmt.Println("path", i, paths[i])
-			if paths[i].direction == none {
+			nextX := (step.direction % 2) * (2 - step.direction)
+			nextY := ((step.direction + 1) % 2) * (step.direction - 1)
+			next, ok := lightmap.Get(step.X+int(nextX), step.Y+int(nextY))
+			if !ok { // out of bounds
 				continue
 			}
 
-			last := paths[i].tiles[len(paths[i].tiles)-1]
-			nextX := (paths[i].direction % 2) * (2 - paths[i].direction)
-			nextY := ((paths[i].direction + 1) % 2) * (paths[i].direction - 1)
-			next, ok := lightmap.Get(last.X+int(nextX), last.Y+int(nextY))
-			// fmt.Println("path", i, "next", next)
-
-			// next tile is out of map
-			if !ok {
-				paths[i].direction = none
-				continue
-			}
-
-			paths[i].tiles = append(paths[i].tiles, next)
-			remaining = true
+			nextStep := Step{next, step.direction}
 
 			if next.S == "." {
-				// continue
+				nextSteps = append(nextSteps, nextStep)
 			} else if next.S == "/" {
-				switch paths[i].direction {
+				switch step.direction {
 				case north:
-					paths[i].direction = east
+					nextStep.direction = east
 				case east:
-					paths[i].direction = north
+					nextStep.direction = north
 				case south:
-					paths[i].direction = west
+					nextStep.direction = west
 				case west:
-					paths[i].direction = south
+					nextStep.direction = south
 				}
+				nextSteps = append(nextSteps, nextStep)
 			} else if next.S == "\\" {
-				switch paths[i].direction {
+				switch step.direction {
 				case north:
-					paths[i].direction = west
+					nextStep.direction = west
 				case west:
-					paths[i].direction = north
+					nextStep.direction = north
 				case south:
-					paths[i].direction = east
+					nextStep.direction = east
 				case east:
-					paths[i].direction = south
+					nextStep.direction = south
 				}
+				nextSteps = append(nextSteps, nextStep)
 			} else if next.S == "-" {
-				switch paths[i].direction {
+				switch step.direction {
+				case west, east:
+					nextSteps = append(nextSteps, nextStep)
 				case north, south:
-					paths[i].direction = west
-					paths = append(paths, Path{
-						tiles:     slices.Clone(paths[i].tiles),
-						direction: east,
+					nextStep.direction = west
+					nextSteps = append(nextSteps, nextStep)
+					nextSteps = append(nextSteps, Step{
+						next,
+						east,
 					})
 				}
 			} else if next.S == "|" {
-				switch paths[i].direction {
+				switch step.direction {
+				case north, south:
+					nextSteps = append(nextSteps, nextStep)
 				case west, east:
-					paths[i].direction = north
-					paths = append(paths, Path{
-						tiles:     slices.Clone(paths[i].tiles),
-						direction: south,
+					nextStep.direction = north
+					nextSteps = append(nextSteps, nextStep)
+					nextSteps = append(nextSteps, Step{
+						next,
+						south,
 					})
 				}
 			}
 		}
 
-		if !remaining {
+		if len(nextSteps) == 0 {
 			break
+		}
+
+		stepsToCheck = nextSteps
+		nextSteps = []Step{}
+	}
+
+	energized := []aoc_util.Tile{}
+
+	for _, step := range stepsTaken {
+		if step != entryStep && !slices.Contains(energized, step.Tile) {
+			energized = append(energized, step.Tile)
 		}
 	}
 
-	energizedTiles := []aoc_util.Tile{}
-	for i, path := range paths {
-		fmt.Println("path", i, path.tiles)
-		energizedTiles = append(energizedTiles, path.tiles...)
-	}
-	fmt.Println((energizedTiles))
-	compacted := slices.CompactFunc(energizedTiles, func(t1, t2 aoc_util.Tile) bool {
-		return t1.X == t2.X && t1.Y == t2.Y
-	})
-
-	return strconv.Itoa(len(compacted)), nil
+	return strconv.Itoa(len(energized)), nil
 }
 
 func Part02(input string) (string, error) {
