@@ -55,7 +55,7 @@ O..#.OO...
 #....#....`))
 	input := aoc_util.Transpose(aoc_util.SplitLines(testInput))
 	actual := slices.Clone(input)
-	tiltLeft(&actual)
+	tilt(&actual, false)
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected\n%v\n\ngot\n\n%v\n", strings.Join(expected, "\n"), strings.Join(actual, "\n"))
@@ -135,6 +135,8 @@ func BenchmarkCycle(b *testing.B) {
 	actual := aoc_util.SplitLines(testInput)
 
 	for i := 0; i < b.N; i++ {
-		cycle(&actual)
+		for i := 0; i < 1000; i++ {
+			cycle(&actual)
+		}
 	}
 }

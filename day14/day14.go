@@ -3,6 +3,7 @@ package day14
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
+	"errors"
 	"slices"
 	"strconv"
 	"strings"
@@ -31,7 +32,7 @@ func Part01(input string) (string, error) {
 	rows := aoc_util.SplitLines(input)
 	cols := aoc_util.Transpose(rows)
 
-	tiltLeft(&cols)
+	tilt(&cols, false)
 
 	sum := 0
 	for _, col := range cols {
@@ -49,22 +50,59 @@ func Part01(input string) (string, error) {
 func Part02(input string) (string, error) {
 	rows := aoc_util.SplitLines(input)
 
-	cycle(&rows)
+	var cycleHistory = map[string]int{}
+
+	prevCycle := 0
+	cycles := 0
+	for {
+		cycle(&rows)
+		cycles++
+
+		s := strings.Join(rows, "\n")
+		c, ok := cycleHistory[s]
+		if ok {
+			prevCycle = c
+			break
+		} else {
+			cycleHistory[s] = cycles
+		}
+
+		if cycles > 1000 {
+			return "", errors.New("could not find cycles within 1000 iterations")
+		}
+	}
+
+	loop := cycles - prevCycle
+	remainder := (1000_000_000-prevCycle)%loop + prevCycle
+
+	for s, c := range cycleHistory {
+		if c == remainder {
+			rows = aoc_util.SplitLines(s)
+		}
+	}
 
 	sum := 0
+	cols := aoc_util.Transpose(rows)
+	for _, col := range cols {
+		for i, r := range col {
+			if r == 'O' {
+				distFromSouth := len(cols) - i
+				sum += distFromSouth
+			}
+		}
+	}
 
 	return strconv.Itoa(sum), nil
 }
 
-func tiltLeft(rows *[]string) {
-	for i := range *rows {
-		(*rows)[i] = moveRocksLeft((*rows)[i])
+func tilt(rows *[]string, right bool) {
+	move := moveRocksLeft
+	if right {
+		move = moveRocksRight
 	}
-}
 
-func tiltRight(rows *[]string) {
 	for i := range *rows {
-		(*rows)[i] = moveRocksRight((*rows)[i])
+		(*rows)[i] = move((*rows)[i])
 	}
 }
 
@@ -134,17 +172,17 @@ func moveRocksRight(s string) string {
 func cycle(rows *[]string) {
 	// north
 	cols := aoc_util.Transpose(*rows)
-	tiltLeft(&cols)
+	tilt(&cols, false)
 
 	// west
 	*rows = aoc_util.Transpose(cols)
-	tiltLeft(rows)
+	tilt(rows, false)
 
 	// south
 	cols = aoc_util.Transpose(*rows)
-	tiltRight(&cols)
+	tilt(&cols, true)
 
 	// east
 	*rows = aoc_util.Transpose(cols)
-	tiltRight(rows)
+	tilt(rows, true)
 }
