@@ -17,7 +17,7 @@ func SplitLines(input string) []string {
 
 // transpose rows into columns
 // assumes all rows have the same length
-func IntoColumns(rows []string) []string {
+func Transpose(rows []string) []string {
 	rowLength := len(rows[0])
 	cols := make([]string, 0, rowLength)
 

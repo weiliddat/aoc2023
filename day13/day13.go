@@ -34,7 +34,7 @@ func Part01(input string) (string, error) {
 		rows := aoc_util.SplitLines(p)
 		vIndices := findVerticalReflections(rows)
 
-		cols := aoc_util.IntoColumns(rows)
+		cols := aoc_util.Transpose(rows)
 		hIndices := findHorizontalReflections(cols)
 
 		// add them up
@@ -66,7 +66,7 @@ func Part02(input string) (string, error) {
 			}
 		}
 
-		cols := aoc_util.IntoColumns(rows)
+		cols := aoc_util.Transpose(rows)
 		hIndices := findReflectionIndices(cols)
 		hCounts := countIndices(hIndices)
 		for index, count := range hCounts {

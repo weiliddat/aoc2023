@@ -40,9 +40,17 @@ func TestIntoColumns(t *testing.T) {
 		"2b",
 		"3c",
 	}
+	actual := aoc_util.Transpose(input)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected %+v got %+v", expected, actual)
+	}
 
-	actual := aoc_util.IntoColumns(input)
-
+	// transposes back into original position
+	expected = []string{
+		"123",
+		"abc",
+	}
+	actual = aoc_util.Transpose(actual)
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v got %+v", expected, actual)
 	}
@@ -56,7 +64,7 @@ func BenchmarkIntoColumns(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		aoc_util.IntoColumns(input)
+		aoc_util.Transpose(input)
 	}
 }
 
