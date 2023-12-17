@@ -3,6 +3,7 @@ package day16
 import (
 	"aoc2023/aoc_util"
 	_ "embed"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -63,85 +64,80 @@ func (s Step) String() string {
 func Part01(input string) (string, error) {
 	lightmap := aoc_util.NewTileMap(input)
 
-	entryStep := Step{
-		aoc_util.Tile{
-			S: ".",
-			X: -1,
-			Y: 0,
-		},
-		east,
+	entryTile, ok := lightmap.Get(0, 0)
+	if !ok {
+		return "", errors.New("cannot find entry tile")
 	}
+	entryStep := Step{entryTile, east}
+	energized := findEnergized(lightmap, entryStep)
 
+	return strconv.Itoa(energized), nil
+}
+
+func findEnergized(lightmap aoc_util.TileMap, entryStep Step) int {
 	stepsTaken := []Step{}
 	stepsToCheck := []Step{entryStep}
 	nextSteps := []Step{}
 	for {
 		for _, step := range stepsToCheck {
-			if slices.Contains(stepsTaken, step) {
-				continue
-			} else {
-				stepsTaken = append(stepsTaken, step)
-			}
+			stepsTaken = append(stepsTaken, step)
 
-			nextX := (step.direction % 2) * (2 - step.direction)
-			nextY := ((step.direction + 1) % 2) * (step.direction - 1)
-			next, ok := lightmap.Get(step.X+int(nextX), step.Y+int(nextY))
-			if !ok { // out of bounds
-				continue
-			}
+			directions := []Direction{}
 
-			nextStep := Step{next, step.direction}
-
-			if next.S == "." {
-				nextSteps = append(nextSteps, nextStep)
-			} else if next.S == "/" {
+			if step.S == "." {
+				directions = append(directions, step.direction)
+			} else if step.S == "/" {
 				switch step.direction {
 				case north:
-					nextStep.direction = east
+					directions = append(directions, east)
 				case east:
-					nextStep.direction = north
+					directions = append(directions, north)
 				case south:
-					nextStep.direction = west
+					directions = append(directions, west)
 				case west:
-					nextStep.direction = south
+					directions = append(directions, south)
 				}
-				nextSteps = append(nextSteps, nextStep)
-			} else if next.S == "\\" {
+			} else if step.S == "\\" {
 				switch step.direction {
 				case north:
-					nextStep.direction = west
+					directions = append(directions, west)
 				case west:
-					nextStep.direction = north
+					directions = append(directions, north)
 				case south:
-					nextStep.direction = east
+					directions = append(directions, east)
 				case east:
-					nextStep.direction = south
+					directions = append(directions, south)
+				}
+			} else if step.S == "-" {
+				switch step.direction {
+				case west, east:
+					directions = append(directions, step.direction)
+				case north, south:
+					directions = append(directions, west)
+					directions = append(directions, east)
+				}
+			} else if step.S == "|" {
+				switch step.direction {
+				case north, south:
+					directions = append(directions, step.direction)
+				case west, east:
+					directions = append(directions, north)
+					directions = append(directions, south)
+				}
+			}
+
+			for _, d := range directions {
+				nextX := (d % 2) * (2 - d)
+				nextY := ((d + 1) % 2) * (d - 1)
+				next, ok := lightmap.Get(step.X+int(nextX), step.Y+int(nextY))
+				if !ok {
+					continue
+				}
+				nextStep := Step{next, d}
+				if slices.Contains(stepsTaken, nextStep) {
+					continue
 				}
 				nextSteps = append(nextSteps, nextStep)
-			} else if next.S == "-" {
-				switch step.direction {
-				case west, east:
-					nextSteps = append(nextSteps, nextStep)
-				case north, south:
-					nextStep.direction = west
-					nextSteps = append(nextSteps, nextStep)
-					nextSteps = append(nextSteps, Step{
-						next,
-						east,
-					})
-				}
-			} else if next.S == "|" {
-				switch step.direction {
-				case north, south:
-					nextSteps = append(nextSteps, nextStep)
-				case west, east:
-					nextStep.direction = north
-					nextSteps = append(nextSteps, nextStep)
-					nextSteps = append(nextSteps, Step{
-						next,
-						south,
-					})
-				}
 			}
 		}
 
@@ -156,14 +152,72 @@ func Part01(input string) (string, error) {
 	energized := []aoc_util.Tile{}
 
 	for _, step := range stepsTaken {
-		if step != entryStep && !slices.Contains(energized, step.Tile) {
+		if !slices.Contains(energized, step.Tile) {
 			energized = append(energized, step.Tile)
 		}
 	}
 
-	return strconv.Itoa(len(energized)), nil
+	return len(energized)
 }
 
 func Part02(input string) (string, error) {
-	return "", nil
+	lightmap := aoc_util.NewTileMap(input)
+	width := len(lightmap.Tiles[0])
+	height := len(lightmap.Tiles)
+
+	highestEnergized := 0
+
+	// north
+	for x := 0; x < width; x++ {
+		entryTile, ok := lightmap.Get(x, 0)
+		if !ok {
+			return "", errors.New("cannot find entry tile")
+		}
+		entryStep := Step{entryTile, south}
+		energized := findEnergized(lightmap, entryStep)
+		if energized > highestEnergized {
+			highestEnergized = energized
+		}
+	}
+
+	// east
+	for y := 0; y < height; y++ {
+		entryTile, ok := lightmap.Get(width-1, y)
+		if !ok {
+			return "", errors.New("cannot find entry tile")
+		}
+		entryStep := Step{entryTile, west}
+		energized := findEnergized(lightmap, entryStep)
+		if energized > highestEnergized {
+			highestEnergized = energized
+		}
+	}
+
+	// south
+	for x := 0; x < width; x++ {
+		entryTile, ok := lightmap.Get(x, height-1)
+		if !ok {
+			return "", errors.New("cannot find entry tile")
+		}
+		entryStep := Step{entryTile, north}
+		energized := findEnergized(lightmap, entryStep)
+		if energized > highestEnergized {
+			highestEnergized = energized
+		}
+	}
+
+	// west
+	for y := 0; y < height; y++ {
+		entryTile, ok := lightmap.Get(0, y)
+		if !ok {
+			return "", errors.New("cannot find entry tile")
+		}
+		entryStep := Step{entryTile, east}
+		energized := findEnergized(lightmap, entryStep)
+		if energized > highestEnergized {
+			highestEnergized = energized
+		}
+	}
+
+	return strconv.Itoa(highestEnergized), nil
 }
