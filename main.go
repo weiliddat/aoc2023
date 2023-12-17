@@ -14,6 +14,7 @@ import (
 	"aoc2023/day11"
 	"aoc2023/day12"
 	"aoc2023/day13"
+	"aoc2023/day14"
 	"fmt"
 	"os"
 	"strconv"
@@ -59,6 +60,8 @@ func main() {
 		outputPart01, outputPart02, err = day12.Solve(day12.Input)
 	case 13:
 		outputPart01, outputPart02, err = day13.Solve(day13.Input)
+	case 14:
+		outputPart01, outputPart02, err = day14.Solve(day14.Input)
 	}
 
 	if err != nil {
