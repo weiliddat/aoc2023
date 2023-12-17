@@ -1,10 +1,9 @@
 package day10_test
 
 import (
+	"aoc2023/aoc_util"
 	"aoc2023/day10"
-	"reflect"
 	"testing"
-	"unsafe"
 )
 
 var testInput01 = `.....
@@ -105,129 +104,13 @@ func TestPart02(t *testing.T) {
 	}
 }
 
-func BenchmarkNewTileMap(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		t := day10.NewTileMap(day10.Input)
-		t.Get(1, 1)
-		t.Get(2, 2)
-	}
-}
-
-func TestString(t *testing.T) {
-	tilemap := day10.NewTileMap(day10.Input)
-	tile, _ := tilemap.Get(0, 0)
-
-	ipd := unsafe.StringData(day10.Input)
-	tmpd := unsafe.StringData(tilemap.Tiles[0])
-	tpd := unsafe.StringData(tile.S)
-
-	if ipd != tmpd || tmpd != tpd {
-		t.Errorf(
-			"Underlying string arrays are different\n%v %v %v\n",
-			ipd, tmpd, tpd,
-		)
-	}
-}
-
-func TestTileMapGet(t *testing.T) {
-	tilemap := day10.NewTileMap(testInput01)
-
-	expected := "."
-	actual, found := tilemap.Get(0, 0)
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if expected != actual.S {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	expected = "."
-	actual, found = tilemap.Get(4, 4)
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if expected != actual.S {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	expected = "S"
-	actual, found = tilemap.Get(1, 1)
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if expected != actual.S {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	expected = "J"
-	actual, found = tilemap.Get(3, 3)
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if expected != actual.S {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	expected = ""
-	actual, found = tilemap.Get(5, 1)
-	if found {
-		t.Errorf("Expected %#v got %#v", false, found)
-	}
-
-	expected = ""
-	actual, found = tilemap.Get(1, 5)
-	if found {
-		t.Errorf("Expected %#v got %#v", false, found)
-	}
-
-	expected = ""
-	actual, found = tilemap.Get(-1, 5)
-	if found {
-		t.Errorf("Expected %#v got %#v", false, found)
-	}
-
-	expected = ""
-	actual, found = tilemap.Get(3, -2)
-	if found {
-		t.Errorf("Expected %#v got %#v", false, found)
-	}
-}
-
-func TestTileMapFind(t *testing.T) {
-	tilemap := day10.NewTileMap(testInput01)
-
-	expected := day10.Tile{"S", 1, 1}
-	actual, found := tilemap.Find("S")
-
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	expected = day10.Tile{".", 0, 0}
-	actual, found = tilemap.Find(".")
-	if !found {
-		t.Errorf("Expected %#v got %#v", true, found)
-	}
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %#v got %#v", expected, actual)
-	}
-
-	_, found = tilemap.Find("F")
-	if found {
-		t.Errorf("Expected %#v got %#v", false, found)
-	}
-}
-
 func TestPathArea(t *testing.T) {
 	// square of area 1
 	path := day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 1, 1},
-		day10.Tile{"", 0, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 1},
 	}
 	expected := 1.0
 	actual := path.Area()
@@ -237,9 +120,9 @@ func TestPathArea(t *testing.T) {
 
 	// triangle of area 0.5
 	path = day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 1, 1},
 	}
 	expected = 0.5
 	actual = path.Area()
@@ -249,12 +132,12 @@ func TestPathArea(t *testing.T) {
 
 	// large triangle
 	path = day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 2, 0},
-		day10.Tile{"", 2, 1},
-		day10.Tile{"", 2, 2},
-		day10.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 2, 0},
+		aoc_util.Tile{"", 2, 1},
+		aoc_util.Tile{"", 2, 2},
+		aoc_util.Tile{"", 1, 1},
 	}
 	expected = 2.0
 	actual = path.Area()
@@ -264,14 +147,14 @@ func TestPathArea(t *testing.T) {
 
 	// polygon
 	path = day10.Path{
-		day10.Tile{"", 4, 0},
-		day10.Tile{"", 4, 1},
-		day10.Tile{"", 4, 2},
-		day10.Tile{"", 3, 3},
-		day10.Tile{"", 2, 4},
-		day10.Tile{"", 1, 5},
-		day10.Tile{"", 0, 2},
-		day10.Tile{"", 2, 1},
+		aoc_util.Tile{"", 4, 0},
+		aoc_util.Tile{"", 4, 1},
+		aoc_util.Tile{"", 4, 2},
+		aoc_util.Tile{"", 3, 3},
+		aoc_util.Tile{"", 2, 4},
+		aoc_util.Tile{"", 1, 5},
+		aoc_util.Tile{"", 0, 2},
+		aoc_util.Tile{"", 2, 1},
 	}
 	expected = 10.
 	actual = path.Area()
@@ -283,10 +166,10 @@ func TestPathArea(t *testing.T) {
 func TestPathInternalPoints(t *testing.T) {
 	// square of area 1
 	path := day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 1, 1},
-		day10.Tile{"", 0, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 1},
 	}
 	expected := 0
 	actual := path.InternalPoints()
@@ -296,9 +179,9 @@ func TestPathInternalPoints(t *testing.T) {
 
 	// triangle of area 0.5
 	path = day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 1, 1},
 	}
 	expected = 0
 	actual = path.InternalPoints()
@@ -308,12 +191,12 @@ func TestPathInternalPoints(t *testing.T) {
 
 	// large triangle
 	path = day10.Path{
-		day10.Tile{"", 0, 0},
-		day10.Tile{"", 1, 0},
-		day10.Tile{"", 2, 0},
-		day10.Tile{"", 2, 1},
-		day10.Tile{"", 2, 2},
-		day10.Tile{"", 1, 1},
+		aoc_util.Tile{"", 0, 0},
+		aoc_util.Tile{"", 1, 0},
+		aoc_util.Tile{"", 2, 0},
+		aoc_util.Tile{"", 2, 1},
+		aoc_util.Tile{"", 2, 2},
+		aoc_util.Tile{"", 1, 1},
 	}
 	expected = 0
 	actual = path.InternalPoints()
@@ -323,14 +206,14 @@ func TestPathInternalPoints(t *testing.T) {
 
 	// polygon
 	path = day10.Path{
-		day10.Tile{"", 4, 0},
-		day10.Tile{"", 4, 1},
-		day10.Tile{"", 4, 2},
-		day10.Tile{"", 3, 3},
-		day10.Tile{"", 2, 4},
-		day10.Tile{"", 1, 5},
-		day10.Tile{"", 0, 2},
-		day10.Tile{"", 2, 1},
+		aoc_util.Tile{"", 4, 0},
+		aoc_util.Tile{"", 4, 1},
+		aoc_util.Tile{"", 4, 2},
+		aoc_util.Tile{"", 3, 3},
+		aoc_util.Tile{"", 2, 4},
+		aoc_util.Tile{"", 1, 5},
+		aoc_util.Tile{"", 0, 2},
+		aoc_util.Tile{"", 2, 1},
 	}
 	expected = 7
 	actual = path.InternalPoints()
